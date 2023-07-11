@@ -1,0 +1,8 @@
+#+title: godot-edn
+
+Convert between ~godot.project~, ~*.tscn~ and ~*.tres~ and ~.edn~ files, plus
+clojure apis for CRUD-ing godot objects.
+
+Similar to: https://github.com/stevearc/godot_parser, but no python.
+
+Godot .tscn ref: https://docs.godotengine.org/en/stable/contributing/development/file_formats/tscn.html

@@ -1,0 +1,6 @@
+{:paths ["src"]
+ :tasks
+ {test-jvm (clojure "-M:kaocha")
+  test-bb  (shell "./bb_test_runner.clj")
+  lint     (shell "clj-kondo --lint src:test")
+  outdated (clojure "-M:outdated")}}
