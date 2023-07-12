@@ -5,34 +5,44 @@
    [godot-edn.parse :as sut]
    [instaparse.core :as insta]))
 
-(def examples {
-               "; Engine configuration file."
-               {}
+(def examples {"; Engine configuration file."
+               {:comments ["; Engine configuration file."]}
 
-               "config_version=5"
-               {}
+               "config_version=5"     {:config-version 5}
+               "[application]"        {:application {}}
+               "config/name=\"Dino\"" {:config/name "Dino"}
 
-               "[application]"
-               {}
-               "config/name=\"Dino\""
-               {}
                "config/features=PackedStringArray(\"4.1\")"
-               {}
+               {:config/features '(PackedStringArray "4.1")}
                "environment/default_clear_color=Color(0, 0, 0, 1)"
-               {}
+               {:environment/default_clear_color '(Color 0 0 0 1)}
 
                "ui_accept={
 \"deadzone\": 0.5,
-\"events\": [Object(InputEventKey,\"resource_local_to_scene\":false,\"resource_name\":\"\",\"device\":0,\"window_id\":0,\"alt_pressed\":false,\"shift_pressed\":false,\"ctrl_pressed\":false,\"meta_pressed\":false,\"pressed\":false,\"keycode\":4194309,\"physical_keycode\":0,\"key_label\":0,\"unicode\":4194309,\"echo\":false,\"script\":null)
-, Object(InputEventKey,\"resource_local_to_scene\":false,\"resource_name\":\"\",\"device\":0,\"window_id\":0,\"alt_pressed\":false,\"shift_pressed\":false,\"ctrl_pressed\":false,\"meta_pressed\":false,\"pressed\":false,\"keycode\":4194310,\"physical_keycode\":0,\"key_label\":0,\"unicode\":4194310,\"echo\":false,\"script\":null)
-, Object(InputEventKey,\"resource_local_to_scene\":false,\"resource_name\":\"\",\"device\":0,\"window_id\":0,\"alt_pressed\":false,\"shift_pressed\":false,\"ctrl_pressed\":false,\"meta_pressed\":false,\"pressed\":false,\"keycode\":32,\"physical_keycode\":0,\"key_label\":0,\"unicode\":32,\"echo\":false,\"script\":null)
-, Object(InputEventJoypadButton,\"resource_local_to_scene\":false,\"resource_name\":\"\",\"device\":-1,\"button_index\":1,\"pressure\":0.0,\"pressed\":true,\"script\":null)
+\"events\": [Object(InputEventKey,\"resource_local_to_scene\":false,\"resource_name\":\"\",\"device\":0)
+, Object(InputEventKey,\"resource_local_to_scene\":false,\"resource_name\":\"\",\"device\":0,\"window_id\":0)
 ]
 }
 "
-               {}
+               {:ui_accept
+                {:deadzone 0.5
+                 :events
+                 ['(Object InputEventKey
+                           [:resouce-local-to-scene false] [:resource-name ""]
+                           [:device 0])
+                  '(Object InputEventKey
+                           [:resouce-local-to-scene false] [:resource-name ""]
+                           [:device 0] [:window-id 0])]}}
 
-               #_#_ "
+               "[rendering]
+
+textures/canvas_textures/default_texture_filter=0"
+               {:rendering
+                {:textures.canvas_textures/default_texture_filter 0
+                 :2d.snapping.use-gpu-pixel-snap                  true
+                 :environment/default-clear-color                 '(Color 0 0 0 1)}}
+
+               "
 ; Engine configuration file.
 ; It's best edited using the editor UI and not directly,
 ; since the parameters that go here are not all obvious.
@@ -45,14 +55,33 @@ config_version=5
 config/name=\"Dino\"
 config/features=PackedStringArray(\"4.1\")
 
+[input]
+
+ui_accept={
+\"deadzone\": 0.5,
+\"events\": [Object(InputEventKey,\"resource_local_to_scene\":false,\"resource_name\":\"\",\"device\":0)
+]
+}
+
 [rendering]
 
 textures/canvas_textures/default_texture_filter=0
 2d/snapping/use_gpu_pixel_snap=true
 environment/default_clear_color=Color(0, 0, 0, 1)
 " {:config-version 5
-   :application    {:config/name "Dino"}}}
-  )
+   :application
+   {:config/name     "Dino"
+    :config/features '(PackedStringArray "4.1")}
+   :input
+   {:ui_accept
+    {:deadzone 0.5
+     :events   ['(Object InputEventKey
+                         [:resouce-local-to-scene false] [:resource-name ""]
+                         [:device 0])]}}
+   :rendering
+   {:textures.canvas_textures/default_texture_filter 0
+    :2d.snapping.use-gpu-pixel-snap                  true
+    :environment/default-clear-color                 '(Color 0 0 0 1)}}})
 
 (comment
   (->> examples keys first
@@ -65,3 +94,12 @@ environment/default_clear_color=Color(0, 0, 0, 1)
         (let [result (sut/parse-project input)]
           (is result)
           (is (not (insta/failure? result))))))))
+
+(deftest project-godot->edn-test
+  (testing "a project.godot can be converted to edn"
+    (doall
+      (for [[input expected] examples]
+        (let [result (sut/parse-project input)]
+          (is result)
+          (is (not (insta/failure? result)))
+          (is (= expected result)))))))
