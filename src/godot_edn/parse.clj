@@ -116,17 +116,27 @@ global = #'[A-Za-z]+'
           global (when (some-> parts first first map?)
                    (->> parts first (apply merge)))
           config (cond->> parts
-                   global (drop 1)
-                   true   (partition 2 2)
-                   true   (map (fn [[section conf]]
-                                 {(first section) (apply merge conf)}))
-                   true   (apply merge))]
+                   global              (drop 1)
+                   (> (count parts) 1) (partition 2 2)
+                   (= (count parts) 1) (map (fn [[kwd]] [[kwd] [{}]]))
+                   true                (map (fn [[section conf]]
+                                              {(first section) (apply merge conf)}))
+                   true                (apply merge))]
       (merge global config))))
 
 
 (comment
   (into {} ["a"])
   (-> "config_version=5" parse-project project->edn)
+  (-> "[application]" parse-project project->edn)
+
+
+  (->
+    "ui_accept={
+\"deadzone\": 0.5,
+\"events\": [Object(InputEventKey,\"resource_local_to_scene\":false,\"resource_name\":\"\",\"device\":0)
+, Object(InputEventKey,\"resource_local_to_scene\":false,\"resource_name\":\"\",\"device\":0,\"window_id\":0)
+]} " parse-project project->edn)
   (-> "config_version=5
 
 [application]
