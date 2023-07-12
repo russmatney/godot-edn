@@ -19,8 +19,8 @@ key_val = key <'='> value
 <key> = word
 
 <value> = string | number | bool | dict | class | !bool global | list
-<string> = <'\"'> chars <'\"'>
-<chars> = #'[A-Za-z0-9_.:/ *,-]*'
+<string> = <'\"'> chars? <'\"'>
+<chars> = #'(^\\\"|\\\\\"|[A-Za-z0-9_.:/ *,-@#!?${}()\n])*'
 list = <'['> (<ows> value <ows> <','?>)* <']'>
 number = '-'? digits '.'? digits?
 <digits> = #'[0-9]+'
@@ -31,6 +31,69 @@ class = #'[A-Za-z0-9]+' args
 kwarg = string <':'> value
 global = #'[A-Za-z]+'
  "))
+
+(comment
+
+  (->>
+    "#!/usr/bin/env bash
+  export DISPLAY=:0
+  unzip -o -q \"{temp_dir}/{archive_name}\" -d \"{temp_dir}\"
+  \"{temp_dir}/{exe_name}\" {cmd_args}\""
+    (re-seq #"([A-Za-z0-9_.:/ *,-@#!?\n\"{}()$])*"))
+
+  (->>
+    "ssh_remote_deploy/cleanup_script=\"#!/usr/bin/env bash
+  kill $(pgrep -x -f \"{temp_dir}/{exe_name} {cmd_args}\")
+  rm -rf \"{temp_dir}\"\""
+    (re-seq #"[A-Za-z0-9_.:/ *,-@#!?\n\"{}()$]*"))
+
+  (->>
+    "ssh_remote_deploy/cleanup_script=\"#!/usr/bin/env bash
+  kill $(pgrep -x -f \\\"{temp_dir}/{exe_name} {cmd_args}\\\")
+  rm -rf \\\"{temp_dir}\\\"\""
+    (re-seq #"\"([A-Za-z0-9_.:/ *,-@#!?{}()$\n\\\"]*)\""))
+
+
+  {:ssh_remote_deploy/run_script ""}
+
+  (->>
+    "ssh_remote_deploy/cleanup_script=\"#!/usr/bin/env bash
+  kill $(pgrep -x -f \\\"{temp_dir}/{exe_name} {cmd_args}\\\")
+  rm -rf \\\"{temp_dir}\\\"\""
+    (#(insta/parses projects-godot-grammar %
+                    :partial :true
+                    :unhide :all
+                    )))
+
+
+  (->>
+    "
+[preset.0]
+
+name=\"dino-linux\"
+platform=\"Linux/X11\"
+runnable=true
+dedicated_server=false
+custom_features=\"dino\"
+export_filter=\"all_resources\"
+include_filter=\"\"
+exclude_filter=\"\"
+export_path=\"dist/dino-linux/dino-linux.x86_64\"
+encryption_include_filters=\"\"
+encryption_exclude_filters=\"\"
+encrypt_pck=false
+encrypt_directory=false
+"
+    (#(insta/parses projects-godot-grammar %
+                    ;; :partial :true
+                    ;; :unhide :all
+                    )))
+
+
+  )
+
+
+
 
 (def transform-def
   {:section_header (comp keyword str)

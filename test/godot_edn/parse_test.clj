@@ -5,7 +5,7 @@
    [godot-edn.parse :as sut]
    [instaparse.core :as insta]))
 
-(def examples
+(def project-godot-examples
   {"; Engine configuration file."
    {:comments ["; Engine configuration file."]}
 
@@ -153,14 +153,10 @@ environment/default_clear_color=Color(0, 0, 0, 1)
    :global         {:layer false}}})
 
 
-(comment
-  (->> examples keys first
-       (insta/parse sut/projects-godot-grammar)))
-
 (deftest project-godot-grammar-test
   (testing "project.godot contents can be parsed"
     (doall
-      (for [input (keys examples)]
+      (for [input (keys project-godot-examples)]
         (let [result (sut/parse-project input)]
           (is result)
           (is (not (insta/failure? result))))))))
@@ -168,7 +164,7 @@ environment/default_clear_color=Color(0, 0, 0, 1)
 (deftest project-godot->edn-test
   (testing "project.godot contents can be converted to edn"
     (doall
-      (for [[input expected] examples]
+      (for [[input expected] project-godot-examples]
         (let [result (sut/project->edn (sut/parse-project input))]
           (is result)
           (is (= expected result)))))))
@@ -409,3 +405,124 @@ cycle_weapon={
       (is res)
       ;; should be 33 inputs!
       (is (= 33 (-> res :input keys count))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; export_presets.cfg
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(def export-presets-cfg-examples
+  {"[preset.0]
+
+   name=\"dino-linux\""
+   {:preset.0 {:name "dino-linux"}}
+
+   "ssh_remote_deploy/run_script=\"#!/usr/bin/env bash
+export DISPLAY=:0
+unzip -o -q \\\"{temp_dir}/{archive_name}\\\" -d \\\"{temp_dir}\\\"
+\\\"{temp_dir}/{exe_name}\\\" {cmd_args}\"
+ssh_remote_deploy/cleanup_script=\"#!/usr/bin/env bash
+kill $(pgrep -x -f \\\"{temp_dir}/{exe_name} {cmd_args}\\\")
+rm -rf \\\"{temp_dir}\\\"\""
+   {:ssh_remote_deploy/run_script     "#!/usr/bin/env bash
+export DISPLAY=:0
+unzip -o -q \\\"{temp_dir}/{archive_name}\\\" -d \\\"{temp_dir}\\\"
+\\\"{temp_dir}/{exe_name}\\\" {cmd_args}"
+    :ssh_remote_deploy/cleanup_script "#!/usr/bin/env bash
+kill $(pgrep -x -f \\\"{temp_dir}/{exe_name} {cmd_args}\\\")
+rm -rf \\\"{temp_dir}\\\""
+    }
+
+   "
+[preset.0]
+
+name=\"dino-linux\"
+platform=\"Linux/X11\"
+runnable=true
+dedicated_server=false
+custom_features=\"dino\"
+export_filter=\"all_resources\"
+include_filter=\"\"
+exclude_filter=\"\"
+export_path=\"dist/dino-linux/dino-linux.x86_64\"
+encryption_include_filters=\"\"
+encryption_exclude_filters=\"\"
+encrypt_pck=false
+encrypt_directory=false
+
+[preset.0.options]
+
+custom_template/debug=\"\"
+custom_template/release=\"\"
+debug/export_console_wrapper=1
+binary_format/embed_pck=true
+texture_format/bptc=true
+texture_format/s3tc=true
+texture_format/etc=false
+texture_format/etc2=false
+binary_format/architecture=\"x86_64\"
+ssh_remote_deploy/enabled=false
+ssh_remote_deploy/host=\"user@host_ip\"
+ssh_remote_deploy/port=\"22\"
+ssh_remote_deploy/extra_args_ssh=\"\"
+ssh_remote_deploy/extra_args_scp=\"\"
+ssh_remote_deploy/run_script=\"#!/usr/bin/env bash
+export DISPLAY=:0
+unzip -o -q \\\"{temp_dir}/{archive_name}\\\" -d \\\"{temp_dir}\\\"
+\\\"{temp_dir}/{exe_name}\\\" {cmd_args}\"
+ssh_remote_deploy/cleanup_script=\"#!/usr/bin/env bash
+kill $(pgrep -x -f \\\"{temp_dir}/{exe_name} {cmd_args}\\\")
+rm -rf \\\"{temp_dir}\\\"\" "
+   {:preset.0
+    {:export_filter              "all_resources",
+     :encryption_include_filters nil,
+     :name                       "dino-linux",
+     :encryption_exclude_filters nil,
+     :custom_features            "dino",
+     :encrypt_pck                false,
+     :export_path                "dist/dino-linux/dino-linux.x86_64",
+     :runnable                   true,
+     :exclude_filter             nil,
+     :include_filter             nil,
+     :encrypt_directory          false,
+     :dedicated_server           false,
+     :platform                   "Linux/X11"},
+    :preset.0.options
+    {:texture_format/etc               false,
+     :binary_format/embed_pck          true,
+     :custom_template/release          nil,
+     :ssh_remote_deploy/extra_args_ssh nil,
+     :custom_template/debug            nil,
+     :texture_format/bptc              true,
+     :ssh_remote_deploy/port           "22",
+     :debug/export_console_wrapper     1,
+     :texture_format/etc2              false,
+     :ssh_remote_deploy/cleanup_script
+     "#!/usr/bin/env bash
+kill $(pgrep -x -f \\\"{temp_dir}/{exe_name} {cmd_args}\\\")
+rm -rf \\\"{temp_dir}\\\"",
+     :ssh_remote_deploy/extra_args_scp nil,
+     :ssh_remote_deploy/enabled        false,
+     :ssh_remote_deploy/run_script
+     "#!/usr/bin/env bash
+export DISPLAY=:0
+unzip -o -q \\\"{temp_dir}/{archive_name}\\\" -d \\\"{temp_dir}\\\"
+\\\"{temp_dir}/{exe_name}\\\" {cmd_args}",
+     :ssh_remote_deploy/host           "user@host_ip",
+     :texture_format/s3tc              true,
+     :binary_format/architecture       "x86_64"}}})
+
+(deftest export-presets-cfg-grammar-test
+  (testing "export_presets.cfg contents can be parsed"
+    (doall
+      (for [input (keys export-presets-cfg-examples)]
+        (let [result (sut/parse-project input)]
+          (is result)
+          (is (not (insta/failure? result))))))))
+
+(deftest export-preset->edn-test
+  (testing "export_presets.cfg contents can be converted to edn"
+    (doall
+      (for [[input expected] export-presets-cfg-examples]
+        (let [result (sut/project->edn (sut/parse-project input))]
+          (is result)
+          (is (= expected result)))))))
