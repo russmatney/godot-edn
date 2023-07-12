@@ -2,7 +2,9 @@
   (:require
    [babashka.fs :as fs]
    [instaparse.core :as insta]
-   [clojure.edn :as edn]))
+   [clojure.edn :as edn]
+   [clojure.string :as string]
+   ))
 
 
 (def example-project-input "; Engine configuration file.
@@ -52,7 +54,7 @@ textures/vram_compression/import_s3tc_bptc.macos=true
 <line> = line_content? <newline?>
 <line_content> = <wsp> | comment | key_val | section_header
 <newline> = '\n'
-comment = ';' <wsp*> #'.*'
+comment = ';' #'.*'?
 <wsp> = #'\\s+'
 section_header = <'['> word <']'>
 <word> = #'[A-Za-z0-9/_.]+'
@@ -107,7 +109,11 @@ global = #'[A-Za-z]+'
           (->> (insta/transform
                  {:section_header (comp keyword str)
                   :key_val        (fn [& args]
-                                    {(-> args first str keyword)
+                                    {(-> args first str
+                                         ((fn [key]
+                                            (if (<= (count (string/split key #"/")) 2)
+                                              (keyword key)
+                                              key))))
                                      (-> args second)})
                   :number         #(edn/read-string (apply str %&))
                   :bool           (fn [val] (case val "true" true "false" false))
@@ -135,7 +141,7 @@ global = #'[A-Za-z]+'
             (= (count parts) 1) (map (fn [[kwd]] [[kwd] [{}]]))
             true
             (map (fn [[section kvs]]
-                   (println kvs)
+                   (println "kvs" kvs)
                    (def kvs kvs)
                    (->> kvs (map first))
                    (let [comments (->> kvs (map first)
@@ -144,8 +150,8 @@ global = #'[A-Za-z]+'
                          rest     (->> kvs (map first)
                                        (remove (comp #{:comment} first)))
                          ]
-                     (println comments)
-                     (println rest)
+                     (println "comments" comments)
+                     (println "rest" rest)
                      {(first section)
                       (into {} (apply merge rest
                                       (when (seq comments)
@@ -158,12 +164,21 @@ global = #'[A-Za-z]+'
 
 
 (comment
+  (-> example-project-input parse-project project->edn)
   (-> "; Some comment" parse-project project->edn)
   (-> "; Some comment
 ; another comment" parse-project project->edn)
   (-> ";; Some comment" parse-project project->edn)
   (-> "config_version=5" parse-project project->edn)
   (-> "[application]" parse-project project->edn)
+
+  (->
+    "; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+
+config_version=5" parse-project project->edn)
 
   (->
     "ui_accept={

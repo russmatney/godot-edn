@@ -24,9 +24,8 @@
 \"deadzone\": 0.5,
 \"events\": [Object(InputEventKey,\"resource_local_to_scene\":false,\"resource_name\":\"\",\"device\":0)
 , Object(InputEventKey,\"resource_local_to_scene\":false,\"resource_name\":\"\",\"device\":0,\"window_id\":0)
-]
-}
-"
+]}"
+
                {:ui_accept
                 {:deadzone 0.5
                  :events
@@ -39,9 +38,31 @@
 
                "[rendering]
 
-textures/canvas_textures/default_texture_filter=0"
+ns_one/ns_two=0
+ns_one/ns_two/ns_three=0"
                {:rendering
-                {:textures.canvas_textures/default_texture_filter 0}}
+                {:ns_one/ns_two           0
+                 "ns_one/ns_two/ns_three" 0}}
+
+
+               "
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+
+config_version=5
+
+[application]
+config/name=\"Dino\"
+"
+               {:comments
+                ["; Engine configuration file."
+                 "; It's best edited using the editor UI and not directly,"
+                 "; since the parameters that go here are not all obvious."
+                 ";"]
+                :config_version 5
+                :application    {:config/name "Dino"}}
 
                "
 ; Engine configuration file.
@@ -83,13 +104,12 @@ environment/default_clear_color=Color(0, 0, 0, 1)
    {:ui_accept
     {:deadzone 0.5
      :events   ['(Object InputEventKey
-                         [:resouce_local_to_scene false] [:resource_name ""]
+                         [:resource_local_to_scene false] [:resource_name ""]
                          [:device 0])]}}
    :rendering
-   {:textures.canvas_textures/default_texture_filter 0
-    :2d.snapping/use_gpu_pixel_snap                  true
-    :environment/default_clear_color                 '(Color 0 0 0 1)}}})
-
+   {"textures/canvas_textures/default_texture_filter" 0
+    "2d/snapping/use_gpu_pixel_snap"                  true
+    :environment/default_clear_color                  '(Color 0 0 0 1)}}})
 
 
 (comment
