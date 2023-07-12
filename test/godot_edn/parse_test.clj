@@ -40,8 +40,7 @@
                "[autoload]
 
 Debug=\"*res://addons/core/Debug.gd\" "
-               ;; TODO autoload order is important...
-               ;; so maybe this can't be a map
+               ;; TODO autoload order is important... maybe this can't be a map
                {:autoload {;; perhaps this should be a symbol
                            :Debug "*res://addons/core/Debug.gd"}}
 

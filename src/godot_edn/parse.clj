@@ -103,7 +103,6 @@ global = #'[A-Za-z]+'
 "))
 
 (defn project->edn [parsed]
-  ;; TODO support parse for single lines too, to ease testing/debugging
   (when-not (insta/failure? parsed)
     (let [parts
           (->> (insta/transform
