@@ -35,10 +35,10 @@
     {:deadzone 0.5
      :events
      ['(Object InputEventKey
-               [:resource_local_to_scene false] [:resource_name ""]
+               [:resource_local_to_scene false] [:resource_name nil]
                [:device 0])
       '(Object InputEventKey
-               [:resource_local_to_scene false] [:resource_name ""]
+               [:resource_local_to_scene false] [:resource_name nil]
                [:device 0] [:window_id 0])]}}
 
    "[application]
@@ -145,7 +145,7 @@ environment/default_clear_color=Color(0, 0, 0, 1)
    :input          {:ui_accept
                     {:deadzone 0.5
                      :events   ['(Object InputEventKey
-                                         [:resource_local_to_scene false] [:resource_name ""]
+                                         [:resource_local_to_scene false] [:resource_name nil]
                                          [:device 0])]}}
    :rendering      {"textures/canvas_textures/default_texture_filter" 0
                     "2d/snapping/use_gpu_pixel_snap"                  true

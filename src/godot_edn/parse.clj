@@ -111,8 +111,8 @@ encrypt_directory=false
                           (map (fn [[key val]] [(keyword key) val]))
                           (into {})))
    :list           #(into [] %&)
-   :kwarg          (fn [key val]
-                     [(keyword key) val])
+   :kwarg          (fn [key & vals]
+                     [(keyword key) (some-> vals first)])
    :global         (fn [global]
                      (symbol global))
    :class          (fn [cls & args]
