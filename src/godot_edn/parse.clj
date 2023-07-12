@@ -87,7 +87,9 @@ global = #'[A-Za-z]+'
 (defn parse-project [content]
   (let [result (insta/parse projects-godot-grammar content
                             #_#_:trace true)]
-    (when (insta/failure? result) (println (insta/get-failure result)))
+    (when (insta/failure? result) (println
+                                    result
+                                    #_(insta/get-failure result)))
     result))
 
 (comment
