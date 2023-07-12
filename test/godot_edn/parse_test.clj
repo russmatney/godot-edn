@@ -69,7 +69,13 @@ ui_accept={
 textures/canvas_textures/default_texture_filter=0
 2d/snapping/use_gpu_pixel_snap=true
 environment/default_clear_color=Color(0, 0, 0, 1)
-" {:config_version 5
+" {
+   :comments
+   ["; Engine configuration file."
+    "; It's best edited using the editor UI and not directly,"
+    "; since the parameters that go here are not all obvious."
+    ";"]
+   :config_version 5
    :application
    {:config/name     "Dino"
     :config/features '(PackedStringArray "4.1")}

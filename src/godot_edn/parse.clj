@@ -121,22 +121,47 @@ global = #'[A-Za-z]+'
                   :global         (fn [global]
                                     (symbol global))
                   :class          (fn [cls & args]
-                                    (cons (symbol cls) args))}
+                                    (cons (symbol cls) args))
+                  :comment        (fn [& comments]
+                                    {:comment (apply str comments)})}
                  parsed)
                (partition-by keyword?))
-          global (when (some-> parts first first map?)
-                   (->> parts first (apply merge)))
-          config (cond->> parts
-                   global              (drop 1)
-                   (> (count parts) 1) (partition 2 2)
-                   (= (count parts) 1) (map (fn [[kwd]] [[kwd] [{}]]))
-                   true                (map (fn [[section conf]]
-                                              {(first section) (apply merge conf)}))
-                   true                (apply merge))]
-      (merge global config))))
+
+          parts  (if-not (some-> parts first first keyword?)
+                   (cons (list :global) parts) parts)
+          sections
+          (cond->> parts
+            (> (count parts) 1) (partition 2 2)
+            (= (count parts) 1) (map (fn [[kwd]] [[kwd] [{}]]))
+            true
+            (map (fn [[section kvs]]
+                   (println kvs)
+                   (def kvs kvs)
+                   (->> kvs (map first))
+                   (let [comments (->> kvs (map first)
+                                       (filter (comp #{:comment} first))
+                                       (map second) (into []))
+                         rest     (->> kvs (map first)
+                                       (remove (comp #{:comment} first)))
+                         ]
+                     (println comments)
+                     (println rest)
+                     {(first section)
+                      (into {} (apply merge rest
+                                      (when (seq comments)
+                                        {:comments comments})))})))
+            true                (apply merge))
+          global (:global sections)]
+      (-> sections
+          (merge global)
+          (dissoc :global)))))
 
 
 (comment
+  (-> "; Some comment" parse-project project->edn)
+  (-> "; Some comment
+; another comment" parse-project project->edn)
+  (-> ";; Some comment" parse-project project->edn)
   (-> "config_version=5" parse-project project->edn)
   (-> "[application]" parse-project project->edn)
 
