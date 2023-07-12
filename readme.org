@@ -9,7 +9,7 @@ Godot .tscn ref: https://docs.godotengine.org/en/stable/contributing/development
 
 
 * Todos
-** [ ] parse godot.project into edn
+** [-] parse godot.project into edn
 ** [ ] parse .tscn files into edn
 ** [ ] parse .tres files into edn
 ** [ ] write godot.project from edn
