@@ -25,7 +25,6 @@
 \"events\": [Object(InputEventKey,\"resource_local_to_scene\":false,\"resource_name\":\"\",\"device\":0)
 , Object(InputEventKey,\"resource_local_to_scene\":false,\"resource_name\":\"\",\"device\":0,\"window_id\":0)
 ]}"
-
                {:ui_accept
                 {:deadzone 0.5
                  :events
@@ -36,6 +35,13 @@
                            [:resource_local_to_scene false] [:resource_name ""]
                            [:device 0] [:window_id 0])]}}
 
+               "[application]
+
+               config/name=\"Dino\"
+               run/main_scene.dungeon-crawler=\"res://src/dungeonCrawler/zones/TwoGeon.tscn\""
+               {:application
+                {:config/name                    "Dino"
+                 :run/main_scene.dungeon-crawler "res://src/dungeonCrawler/zones/TwoGeon.tscn"}}
 
                "[autoload]
 
@@ -43,6 +49,12 @@ Debug=\"*res://addons/core/Debug.gd\" "
                ;; TODO autoload order is important... maybe this can't be a map
                {:autoload {;; perhaps this should be a symbol
                            :Debug "*res://addons/core/Debug.gd"}}
+
+               "[layer_names]
+
+               key=\"Spaces in strings\""
+               {:layer_names {:key "Spaces in strings"}}
+
 
                "[display]
 
