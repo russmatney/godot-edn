@@ -3,6 +3,17 @@
 Convert between ~godot.project~, ~*.tscn~ and ~*.tres~ and ~.edn~ files, plus
 clojure apis for CRUD-ing godot objects.
 
-Similar to: https://github.com/stevearc/godot_parser, but no python.
+Similar to: https://github.com/stevearc/godot_parser, but for clojure instead of python.
 
 Godot .tscn ref: https://docs.godotengine.org/en/stable/contributing/development/file_formats/tscn.html
+
+
+* Todos
+** [ ] parse godot.project into edn
+** [ ] parse .tscn files into edn
+** [ ] parse .tres files into edn
+** [ ] write godot.project from edn
+** [ ] write .tscn from edn
+** [ ] write .tres from edn
+** [ ] watchers to update .edn whenever godot updates .tscn/.tres/godot.project
+** [ ] godot import addon to update .tscn/.tres/godot.project when .edn is updated
