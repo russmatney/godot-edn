@@ -20,14 +20,14 @@ key_val = key <'='> value
 
 <value> = string | number | bool | dict | class | !bool global | list
 <string> = <'\"'> chars? <'\"'>
-<chars> = #'(^\\\"|\\\\\"|[A-Za-z0-9_.:/ *,-@#!?${}()\n])*'
+<chars> = #'(^\\\"|\\\\\"|[A-Za-z0-9_.:/ *,-@#!?${}()\n\\'\\\\\\|])*'
 list = <'['> (<ows> value <ows> <','?>)* <']'>
 number = '-'? digits '.'? digits?
 <digits> = #'[0-9]+'
 bool = 'true' | 'false'
 dict = <'{'> (<ows> string <':'> <rws> value <ows> <','?>)* <'}'>
-class = #'[A-Za-z0-9]+' args
-<args> = <'('> value (<','> <ows> (value | kwarg) <ows>)* <')'>
+class = #'[A-Za-z0-9]+' <'('> args? <')'>
+<args> = value (<','> <ows> (value | kwarg) <ows>)*
 kwarg = string <':'> value
 global = #'[A-Za-z]+'
  "))
@@ -163,6 +163,20 @@ encrypt_directory=false
   (-> proj-content parse-project)
   (-> proj-content parse-project project->edn)
 
+  (->
+    "ui_accept={
+\"deadzone\": 0.5,
+\"events\": [Object(InputEventKey,\"resource_local_to_scene\":false,\"resource_name\":\"\",\"device\":0)
+, Object(InputEventKey,\"resource_local_to_scene\":false,\"resource_name\":\"\",\"device\":0,\"window_id\":0)
+]}"
+    parse-project project->edn)
+
+  (-> "[preset.0]
+
+name=\"dino-linux\"
+codesign/custom_options=PackedStringArray()"
+      parse-project project->edn)
+
   (-> "; Some comment
 ; another comment" parse-project project->edn)
 
@@ -208,15 +222,14 @@ environment/default_clear_color=Color(0, 0, 0, 1)"
     (if-not (fs/exists? path)
       (println "No file at path:" path)
       (cond
-        (#{"godot"} ext) (insta/parse projects-godot-grammar content)
-        (#{"cfg"} ext)   (insta/parse projects-godot-grammar content)
-        (#{"tscn"} ext)  (insta/parse tscn-grammar content)
-        (#{"tres"} ext)  (insta/parse tres-grammar content)
-        :else            (println "Unexpected file extension:" ext)))))
+        (#{"godot" "cfg"} ext) (->> content (insta/parse projects-godot-grammar) project->edn)
+        (#{"tscn"} ext)        (insta/parse tscn-grammar content)
+        (#{"tres"} ext)        (insta/parse tres-grammar content)
+        :else                  (println "Unexpected file extension:" ext)))))
 
 (comment
   (parse-godot-file
     (str (fs/home) "/russmatney/dino/project.godot"))
 
   (parse-godot-file
-    (str (fs/home) "/russmatney/dino/project.godot")))
+    (str (fs/home) "/russmatney/dino/export_presets.cfg")))

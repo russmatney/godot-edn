@@ -413,8 +413,19 @@ cycle_weapon={
 (def export-presets-cfg-examples
   {"[preset.0]
 
-   name=\"dino-linux\""
-   {:preset.0 {:name "dino-linux"}}
+name=\"dino-linux\"
+codesign/custom_options=PackedStringArray()"
+   {:preset.0 {:name                    "dino-linux"
+               :codesign/custom_options '(PackedStringArray)
+               }}
+
+   "ssh_remote_deploy/cleanup_script=\"Stop-ScheduledTask | -TaskName godot_remote_debug -ErrorAction:SilentlyContinue
+Unregister-ScheduledTask -TaskName godot_remote_debug -Confirm:$false -ErrorAction:SilentlyContinue
+Remove-Item -Recurse -Force '{temp_dir}\\{exe_name}'\"
+"
+   {:ssh_remote_deploy/cleanup_script "Stop-ScheduledTask | -TaskName godot_remote_debug -ErrorAction:SilentlyContinue
+Unregister-ScheduledTask -TaskName godot_remote_debug -Confirm:$false -ErrorAction:SilentlyContinue
+Remove-Item -Recurse -Force '{temp_dir}\\{exe_name}'"}
 
    "ssh_remote_deploy/run_script=\"#!/usr/bin/env bash
 export DISPLAY=:0
