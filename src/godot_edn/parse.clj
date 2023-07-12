@@ -133,34 +133,28 @@ global = #'[A-Za-z]+'
                  parsed)
                (partition-by keyword?))
 
-          parts  (if-not (some-> parts first first keyword?)
-                   (cons (list :global) parts) parts)
+          parts     (if-not (some-> parts first first keyword?)
+                      (cons (list :_top_level) parts) parts)
           sections
           (cond->> parts
             (> (count parts) 1) (partition 2 2)
             (= (count parts) 1) (map (fn [[kwd]] [[kwd] [{}]]))
             true
             (map (fn [[section kvs]]
-                   (println "kvs" kvs)
-                   (def kvs kvs)
-                   (->> kvs (map first))
                    (let [comments (->> kvs (map first)
                                        (filter (comp #{:comment} first))
                                        (map second) (into []))
                          rest     (->> kvs (map first)
-                                       (remove (comp #{:comment} first)))
-                         ]
-                     (println "comments" comments)
-                     (println "rest" rest)
+                                       (remove (comp #{:comment} first)))]
                      {(first section)
                       (into {} (apply merge rest
                                       (when (seq comments)
                                         {:comments comments})))})))
             true                (apply merge))
-          global (:global sections)]
+          top-level (:_top_level sections)]
       (-> sections
-          (merge global)
-          (dissoc :global)))))
+          (merge top-level)
+          (dissoc :_top_level)))))
 
 
 (comment

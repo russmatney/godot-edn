@@ -40,6 +40,8 @@
                "[autoload]
 
 Debug=\"*res://addons/core/Debug.gd\" "
+               ;; TODO autoload order is important...
+               ;; so maybe this can't be a map
                {:autoload {;; perhaps this should be a symbol
                            :Debug "*res://addons/core/Debug.gd"}}
 
@@ -99,6 +101,10 @@ config_version=5
 config/name=\"Dino\"
 config/features=PackedStringArray(\"4.1\")
 
+[global]
+
+layer=false
+
 [input]
 
 ui_accept={
@@ -131,7 +137,8 @@ environment/default_clear_color=Color(0, 0, 0, 1)
    :rendering
    {"textures/canvas_textures/default_texture_filter" 0
     "2d/snapping/use_gpu_pixel_snap"                  true
-    :environment/default_clear_color                  '(Color 0 0 0 1)}}})
+    :environment/default_clear_color                  '(Color 0 0 0 1)}
+   :global         {:layer false}}})
 
 
 (comment
