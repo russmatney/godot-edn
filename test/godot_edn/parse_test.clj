@@ -36,6 +36,13 @@
                            [:resource_local_to_scene false] [:resource_name ""]
                            [:device 0] [:window_id 0])]}}
 
+
+               "[autoload]
+
+Debug=\"*res://addons/core/Debug.gd\" "
+               {:autoload {;; perhaps this should be a symbol
+                           :Debug "*res://addons/core/Debug.gd"}}
+
                "[display]
 
 window/size/viewport_width=1280

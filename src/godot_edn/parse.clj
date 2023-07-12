@@ -66,7 +66,7 @@ key_val = key <'='> value
 <value> = string | number | bool | dict | class | !bool global | list
 <string> = <'\"'> chars <'\"'>
 list = <'['> value <wsp*> (<','> <wsp*> value <wsp-or-nl*>)* <']'>
-<chars> = #'[A-Za-z0-9_.:/ ]*'
+<chars> = #'[A-Za-z0-9_.:/ *]*'
 number = '-'? digit* '.'? digit*
 <digit> = #'[0-9]'
 bool = 'true' | 'false'
