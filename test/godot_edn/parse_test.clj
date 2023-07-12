@@ -18,6 +18,11 @@
    "environment/default_clear_color=Color(0, 0, 0, 1)"
    {:environment/default_clear_color '(Color 0 0 0 1)}
 
+   "2d_physics/layer_1=\"walls, doors, env\"
+2d_physics/layer_11=\"fences, low-walls\""
+   {:2d_physics/layer_1  "walls, doors, env"
+    :2d_physics/layer_11 "fences, low-walls"}
+
    "ui_accept={\"deadzone\": 0.5,}"
    {:ui_accept {:deadzone 0.5}}
 

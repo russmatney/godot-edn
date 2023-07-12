@@ -9,7 +9,8 @@ Godot .tscn ref: https://docs.godotengine.org/en/stable/contributing/development
 
 
 * Todos
-** [-] parse godot.project into edn
+** [X] parse godot.project into edn
+CLOSED: [2023-07-12 Wed 15:45]
 ** [ ] parse export_presets.cfg into edn
 ** [ ] parse .tscn files into edn
 ** [ ] parse .tres files into edn
@@ -19,3 +20,4 @@ Godot .tscn ref: https://docs.godotengine.org/en/stable/contributing/development
 ** [ ] write .tres from edn
 ** [ ] watchers to update .edn whenever godot updates .tscn/.tres/godot.project/export_presets.cfg
 ** [ ] godot import addon to update .tscn/.tres/godot.project when .edn is updated
+** [ ] autoloads should parse as an ordered list, not a map
