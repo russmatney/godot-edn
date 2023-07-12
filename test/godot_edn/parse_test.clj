@@ -17,6 +17,9 @@
                "environment/default_clear_color=Color(0, 0, 0, 1)"
                {:environment/default_clear_color '(Color 0 0 0 1)}
 
+               "ui_accept={\"deadzone\": 0.5,} "
+               {:ui_accept {:deadzone 0.5}}
+
                "ui_accept={
 \"deadzone\": 0.5,
 \"events\": [Object(InputEventKey,\"resource_local_to_scene\":false,\"resource_name\":\"\",\"device\":0)

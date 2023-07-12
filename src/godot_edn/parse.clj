@@ -109,7 +109,11 @@ global = #'[A-Za-z]+'
                   :key_val        (fn [& args]
                                     {(-> args first str keyword)
                                      (-> args second)})
-                  :number         #(edn/read-string (apply str %&))}
+                  :number         #(edn/read-string (apply str %&))
+                  :dict           (fn [& kvs]
+                                    (->> kvs (partition 2 2)
+                                         (map (fn [[key val]] [(keyword key) val]))
+                                         (into {})))}
 
                  parsed)
                (partition-by keyword?))
@@ -126,10 +130,8 @@ global = #'[A-Za-z]+'
 
 
 (comment
-  (into {} ["a"])
   (-> "config_version=5" parse-project project->edn)
   (-> "[application]" parse-project project->edn)
-
 
   (->
     "ui_accept={
