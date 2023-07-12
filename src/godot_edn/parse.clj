@@ -70,7 +70,7 @@ number = '-'? digit* '.'? digit*
 bool = 'true' | 'false'
 dict = <'{'> (<wsp*> string <':'> <wsp*> value <','?> <wsp*>)* <newline?> <'}'>
 class = #'[A-Za-z0-9]+' args
-args = <'('> value (<','> <wsp*> (value | kwarg) <wsp*>)* <')'>
+<args> = <'('> value (<','> <wsp*> (value | kwarg) <wsp*>)* <')'>
 kwarg = string <':'> value
 global = #'[A-Za-z]+'
  "))
@@ -110,11 +110,18 @@ global = #'[A-Za-z]+'
                                     {(-> args first str keyword)
                                      (-> args second)})
                   :number         #(edn/read-string (apply str %&))
+                  :bool           (fn [val] (case val "true" true "false" false))
                   :dict           (fn [& kvs]
                                     (->> kvs (partition 2 2)
                                          (map (fn [[key val]] [(keyword key) val]))
-                                         (into {})))}
-
+                                         (into {})))
+                  :list           #(into [] %&)
+                  :kwarg          (fn [key val]
+                                    [(keyword key) val])
+                  :global         (fn [global]
+                                    (symbol global))
+                  :class          (fn [cls & args]
+                                    (cons (symbol cls) args))}
                  parsed)
                (partition-by keyword?))
           global (when (some-> parts first first map?)

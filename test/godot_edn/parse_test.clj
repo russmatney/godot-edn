@@ -31,10 +31,10 @@
                 {:deadzone 0.5
                  :events
                  ['(Object InputEventKey
-                           [:resouce_local_to_scene false] [:resource_name ""]
+                           [:resource_local_to_scene false] [:resource_name ""]
                            [:device 0])
                   '(Object InputEventKey
-                           [:resouce_local_to_scene false] [:resource_name ""]
+                           [:resource_local_to_scene false] [:resource_name ""]
                            [:device 0] [:window_id 0])]}}
 
                "[rendering]
