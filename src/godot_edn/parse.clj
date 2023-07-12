@@ -1,7 +1,8 @@
 (ns godot-edn.parse
   (:require
    [babashka.fs :as fs]
-   [instaparse.core :as insta]))
+   [instaparse.core :as insta]
+   [clojure.edn :as edn]))
 
 
 (def example-project-input "; Engine configuration file.
@@ -77,14 +78,14 @@ global = #'[A-Za-z]+'
 (defn parse-project [content]
   (let [result (insta/parse projects-godot-grammar content
                             #_#_:trace true)]
-    (when (insta/failure? result)
-      (println (insta/get-failure result)))
+    (when (insta/failure? result) (println (insta/get-failure result)))
     result))
 
 (comment
   (parse-project example-project-input)
   (parse-project "; Engine configuration file.")
-  (parse-project "config_version=5")
+  (project->edn
+    (parse-project "config_version=5"))
   (parse-project "[application]")
   (parse-project "config/name=\"Dino\"")
   (parse-project "config/features=PackedStringArray(\"4.1\")")
@@ -97,9 +98,49 @@ global = #'[A-Za-z]+'
 , Object(InputEventJoypadButton,\"resource_local_to_scene\":false,\"resource_name\":\"\",\"device\":-1,\"button_index\":1,\"pressure\":0.0,\"pressed\":true,\"script\":null)
 ]
 }
-")
-  )
+"))
 
+(defn project->edn [parsed]
+  ;; TODO support parse for single lines too, to ease testing/debugging
+  (when-not (insta/failure? parsed)
+    (let [parts
+          (->> (insta/transform
+                 {:section_header (comp keyword str)
+                  :key_val        (fn [& args]
+                                    {(-> args first str keyword)
+                                     (-> args second)})
+                  :number         #(edn/read-string (apply str %&))}
+
+                 parsed)
+               (partition-by keyword?))
+          global (when (some-> parts first first map?)
+                   (->> parts first (apply merge)))
+          config (cond->> parts
+                   global (drop 1)
+                   true   (partition 2 2)
+                   true   (map (fn [[section conf]]
+                                 {(first section) (apply merge conf)}))
+                   true   (apply merge))]
+      (merge global config))))
+
+
+(comment
+  (into {} ["a"])
+  (-> "config_version=5" parse-project project->edn)
+  (-> "config_version=5
+
+[application]
+
+config/name=\"Dino\"
+config/features=PackedStringArray(\"4.1\")
+
+[rendering]
+
+textures/canvas_textures/default_texture_filter=0
+2d/snapping/use_gpu_pixel_snap=true
+environment/default_clear_color=Color(0, 0, 0, 1)"
+      parse-project project->edn)
+  )
 
 
 (def tscn-grammar (insta/parser "some = 'some'"))
