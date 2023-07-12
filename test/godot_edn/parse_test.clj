@@ -36,13 +36,28 @@
                            [:resource_local_to_scene false] [:resource_name ""]
                            [:device 0] [:window_id 0])]}}
 
+               "[display]
+
+window/size/viewport_width=1280
+window/size/viewport_height=720
+window/stretch/mode.runner=\"viewport\"
+window/stretch/aspect.runner=\"keep\"
+" {:display {"window/size/viewport_width"   1280
+             "window/size/viewport_height"  720
+             "window/stretch/mode.runner"   "viewport"
+             "window/stretch/aspect.runner" "keep"}}
+
                "[rendering]
 
 ns_one/ns_two=0
-ns_one/ns_two/ns_three=0"
+ns_one/ns_two/ns_three=0
+ns_one/ns_two/ns_3.four=0
+"
                {:rendering
-                {:ns_one/ns_two           0
-                 "ns_one/ns_two/ns_three" 0}}
+                {:ns_one/ns_two            0
+                 "ns_one/ns_two/ns_three"  0
+                 "ns_one/ns_two/ns_3.four" 0
+                 }}
 
 
                "
