@@ -40,7 +40,7 @@ key_val = key <'='> value
 
 <value> = string | number | bool | dict | class | !bool global | list
 <string> = <'\"'> chars? <'\"'>
-<chars> = #'(^\\\"|\\\\\"|[A-Za-z0-9_.:/ *,-@#!?${}()\n\\'\\\\\\|])*'
+<chars> = #'(^\\\"|\\\\\"|[A-Za-z0-9_.:/ *,-@#!?${}()\\[\\]\n\\'\\\\\\|])*'
 list = <'['> (<ows> value <ows> <','?>)* <']'>
 number = '-'? digits '.'? digits?
 <digits> = #'[0-9]+'
@@ -108,19 +108,20 @@ ext_resource = <'[ext_resource'> kwargs <']'>
 sub_resource = <'[sub_resource'> kwargs <']'>
 node = <'[node'> kwargs <']'>
 
-<keyword> = #'[a-z_]+'
+<keyword> = #'[A-Za-z0-9_/]+'
 kwargs = (<rws> kwarg)*
 kwarg = keyword <'='> kwarg_value
-<kwarg_value> = string | number | class
+<kwarg_value> = string | number | class | list
 
 
 key_val = keyword <' = '> value
 
-<value> = string | number | bool | dict | class | !bool global | list
+<value> = string | string_keyword | number | bool | dict | class | !bool global | list
 <string> = <'\"'> chars? <'\"'>
-<chars> = #'(^\\\"|\\\\\"|[A-Za-z0-9_.:/ *,-@#!?${}()\n\\'\\\\\\|])*'
+string_keyword = <'&\"'> chars? <'\"'>
+<chars> = #'(^\\\"|\\\\\"|[A-Za-z0-9_.:/ *,-@#!?${}()\\[\\]\n\\'\\\\\\|])*'
 list = <'['> (<ows> value <ows> <','?>)* <']'>
-number = '-'? digits '.'? digits?
+number = '-'? digits '.'? digits? 'e-'? digits?
 <digits> = #'[0-9]+'
 bool = 'true' | 'false'
 dict = <'{'> (<ows> string <':'> <rws> value <ows> <','?>)* <'}'>
@@ -131,6 +132,17 @@ global = #'[A-Za-z]+'
 
 
 (comment
+  (->
+    "[node name=\"Player\" type=\"CharacterBody2D\" groups=[\"player\"]]
+text = \"[center]State\""
+    #_(#(insta/parses tscn-grammar
+                      %
+                      ;; :partial true
+                      ;; :unhide :all
+                      ))
+    parse-tscn tscn->edn)
+  (println "hi")
+
   (def sample
     "[gd_scene load_steps=43 format=3 uid=\"uid://cdtqoa3gaqsdh\"]
 
@@ -157,15 +169,11 @@ clip_contents = false
 offset_left = -24.0
 ")
 
-  (->> sample
-       (#(insta/parses tscn-grammar
-                       %
-                       ;; :unhide :all
-                       )))
+  (->> sample (#(insta/parses tscn-grammar %
+                              ;; :unhide :all
+                              )))
 
-  (->> sample parse-tscn tscn->edn)
-
-  )
+  (->> sample parse-tscn tscn->edn))
 
 (def tscn-transform-def
   (merge
@@ -203,10 +211,13 @@ offset_left = -24.0
                              rst)
                   sub_res  (->> elms (filter (comp #{:sub_resource} first)) (map rest))
                   nodes    (->> elms (filter (comp #{:node} first)) (map rest))]
-              {:gd_scene           (-> gd_scene first second)
-               :external_resources ext_res
-               :sub_resources      sub_res
-               :nodes              nodes}))))))
+              (->>
+                {:gd_scene           (-> gd_scene first second)
+                 :external_resources ext_res
+                 :sub_resources      sub_res
+                 :nodes              nodes}
+                (filter (comp seq second))
+                (into {}))))))))
 
 (defn parse-tscn [content]
   (let [result (insta/parse tscn-grammar content)]
@@ -232,7 +243,7 @@ offset_left = -24.0
         :else                  (println "Unexpected file extension:" ext)))))
 
 (comment
-  (parse-godot-file (str (fs/home) "/russmatney/dino/src/hatbot/player/Player.tscn"))
+  (parse-godot-file (str (fs/home) "/russmatney/dino/src/hatbot/zones/TheKingdom.tscn"))
   (slurp
     (str (fs/home) "/russmatney/dino/src/hatbot/player/Player.tscn"))
 

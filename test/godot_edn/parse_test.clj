@@ -537,3 +537,126 @@ unzip -o -q \\\"{temp_dir}/{archive_name}\\\" -d \\\"{temp_dir}\\\"
         (let [result (sut/project->edn (sut/parse-project input))]
           (is result)
           (is (= expected result)))))))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; .tscn
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+(def tscn-examples
+  {
+   "[gd_scene load_steps=43 format=3 uid=\"uid://cdtqoa3gaqsdh\"]
+
+[ext_resource type=\"Script\" path=\"res://src/hatbot/player/Player.gd\" id=\"1_20cuc\"]
+[ext_resource type=\"PackedScene\" uid=\"uid://dgan7tpytfkfo\" path=\"res://addons/beehive/sidescroller/machine/SSMachine.tscn\" id=\"11_oh4d4\"]
+
+[sub_resource type=\"OccluderPolygon2D\" id=\"OccluderPolygon2D_fow7p\"]
+cull_mode = 2
+polygon = PackedVector2Array(-3, -4, 3, -4, 3, 1, 2, 5, -2, 5, -3, 1)
+
+[sub_resource type=\"CapsuleShape2D\" id=\"CapsuleShape2D_ll7ph\"]
+radius = 3.8
+height = 12.0
+
+[node name=\"NearGroundCheck\" type=\"RayCast2D\" parent=\".\"]
+target_position = Vector2(0, 40)
+
+[node name=\"HeartParticles\" parent=\".\" instance=ExtResource(\"8_atx5s\")]
+
+[node name=\"SkullParticles\" parent=\".\" instance=ExtResource(\"9_u5coh\")]
+
+[node name=\"StateLabel\" type=\"RichTextLabel\" parent=\".\"]
+clip_contents = false
+offset_left = -24.0"
+   {:gd_scene {:load_steps 43 :format 3 :uid "uid://cdtqoa3gaqsdh"}
+    :external_resources
+    (list {:type "Script"
+           :path "res://src/hatbot/player/Player.gd"
+           :id   "1_20cuc"}
+          {:type "PackedScene"
+           :uid  "uid://dgan7tpytfkfo"
+           :path "res://addons/beehive/sidescroller/machine/SSMachine.tscn"
+           :id   "11_oh4d4"})
+    :sub_resources
+    (list (list {:type "OccluderPolygon2D" :id "OccluderPolygon2D_fow7p"}
+                {:cull_mode 2
+                 :polygon   '(PackedVector2Array -3 -4 3 -4 3 1 2 5 -2 5 -3 1)})
+          (list {:type "CapsuleShape2D" :id "CapsuleShape2D_ll7ph"}
+                {:radius 3.8 :height 12.0}))
+    :nodes
+    (list (list {:name "NearGroundCheck" :type "RayCast2D" :parent "."}
+                {:target_position '(Vector2 0 40)})
+          (list {:name     "HeartParticles"
+                 :parent   "."
+                 :instance '(ExtResource "8_atx5s")})
+          (list {:name     "SkullParticles"
+                 :parent   "."
+                 :instance '(ExtResource "9_u5coh")})
+          (list {:name "StateLabel" :type "RichTextLabel" :parent "."}
+                {:clip_contents false :offset_left -24.0}))}
+
+   "
+[sub_resource type=\"SpriteFrames\" id=\"SpriteFrames_80ph8\"]
+animations = [{
+\"frames\": [{
+\"duration\": 1.0,
+\"texture\": SubResource(\"AtlasTexture_e530c\")
+}, {
+\"duration\": 1.0,
+\"texture\": SubResource(\"AtlasTexture_74bqa\")
+}, {
+\"duration\": 1.0,
+\"texture\": SubResource(\"AtlasTexture_6gdh6\")
+}, {
+\"duration\": 1.0,
+\"texture\": SubResource(\"AtlasTexture_vlrpv\")
+}],
+\"loop\": true,
+\"name\": &\"air\",
+\"speed\": 10.0
+}]
+" {:sub_resources
+   '(({:type "SpriteFrames" :id "SpriteFrames_80ph8"}
+      {:animations
+       [{:frames
+         [{:duration 1.0 :texture (SubResource "AtlasTexture_e530c")}
+          {:duration 1.0 :texture (SubResource "AtlasTexture_74bqa")}
+          {:duration 1.0 :texture (SubResource "AtlasTexture_6gdh6")}
+          {:duration 1.0 :texture (SubResource "AtlasTexture_vlrpv")}]
+         :loop  true
+         :name  [:string_keyword "air"]
+         :speed 10.0}]}))}
+
+   "[node name=\"Player\" type=\"CharacterBody2D\" groups=[\"player\"]]"
+   {:nodes (list (list {:name "Player" :type "CharacterBody2D" :groups ["player"]}))}
+
+   "[node name=\"Player\" type=\"CharacterBody2D\" groups=[\"player\"]]
+metadata/_aseprite_wizard_config_ = 5
+position = Vector2(2.08165e-12, -60)
+text = \"[center]State\"
+layer_0/tile_data = PackedInt32Array(458759, 196609, 3)
+"
+   {:nodes
+    (list (list
+            {:name "Player" :type "CharacterBody2D" :groups ["player"]}
+            {:metadata/_aseprite_wizard_config_ 5
+             :position                          '(Vector2 2.08165E-12 -60)
+             :text                              "[center]State"
+             :layer_0/tile_data                 '(PackedInt32Array 458759 196609 3)}))}})
+
+(deftest tscn-grammar-test
+  (testing "*.tscn contents can be parsed"
+    (doall
+      (for [input (keys tscn-examples)]
+        (let [result (sut/parse-tscn input)]
+          (is result)
+          (is (not (insta/failure? result))))))))
+
+(deftest tscn->edn-test
+  (testing "*.tscn contents can be converted to edn"
+    (doall
+      (for [[input expected] tscn-examples]
+        (let [result (sut/tscn->edn (sut/parse-tscn input))]
+          (is result)
+          (is (= expected result)))))))
