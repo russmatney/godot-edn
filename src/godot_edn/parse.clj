@@ -26,38 +26,48 @@
    :class   (fn [cls & args]
               (cons (symbol cls) args))})
 
-;; project.godot files
-
-(def projects-godot-grammar
-  (insta/parser "<project_config> = (<ows> comment <ows> | <ows> key_val <ows> | <ows> section_header <ows>)+
-comment = #';.*'
+(def shared-grammar
+  "
 <ows> = #'\\s*'
 <rws> = #'\\s+'
-section_header = <'['> word <']'>
+
 <word> = #'[A-Za-z0-9/_.-]+'
 key_val = key <'='> value
 <key> = word
+")
 
-<value> = string | number | bool | dict | class | !bool global | list
+(def value-grammar
+  "
+<value> = string | string_keyword | number | bool | dict | class | !bool global | list
 <string> = <'\"'> chars? <'\"'>
+string_keyword = <'&\"'> chars? <'\"'>
 <chars> = #'(^\\\"|\\\\\"|[A-Za-z0-9_.:/ *,-@#!?${}()\\[\\]\n\\'\\\\\\|])*'
 list = <'['> (<ows> value <ows> <','?>)* <']'>
-number = '-'? digits '.'? digits?
+number = '-'? digits '.'? digits? 'e-'? digits?
 <digits> = #'[0-9]+'
 bool = 'true' | 'false'
 dict = <'{'> (<ows> string <':'> <rws> value <ows> <','?>)* <'}'>
 class = #'[A-Za-z0-9]+' <'('> args? <')'>
-<args> = value (<','> <ows> (value | kwarg) <ows>)*
-kwarg = string <':'> value
+<args> = value (<','> <ows> (value | arg_kwarg) <ows>)*
+arg_kwarg = string <':'> value
 global = #'[A-Za-z]+'
- "))
+")
+
+;; project.godot files
+
+(def projects-godot-grammar
+  (insta/parser (str "
+<project_config> = (<ows> comment <ows> | <ows> key_val <ows> | <ows> section_header <ows>)+
+comment = #';.*'
+section_header = <'['> word <']'>
+" shared-grammar value-grammar)))
 
 (def project-transform-def
   (merge
     shared-transform
     {:section_header (comp keyword str)
-     :kwarg          (fn [key & vals]
-                       [(keyword key) (some-> vals first)])
+     :arg_kwarg      (fn [key & vals]
+                        [(keyword key) (some-> vals first)])
      :comment        (fn [& comments]
                        {:comment (apply str comments)})}))
 
@@ -97,11 +107,9 @@ global = #'[A-Za-z]+'
 ;; .tscn files
 
 (def tscn-grammar
-  (insta/parser "
+  (insta/parser (str "
 <parsed> = (<ows> tscn_line <ows>)+
 <tscn_line> = gd_scene | gd_resource | ext_resource | sub_resource | node | resource | key_val
-<ows> = #'\\s*'
-<rws> = #'\\s+'
 
 gd_scene = <'[gd_scene'> kwargs <']'>
 gd_resource = <'[gd_resource'> kwargs <']'>
@@ -114,24 +122,13 @@ resource = <'[resource'> kwargs <']'>
 kwargs = (<rws> kwarg)*
 kwarg = keyword <'='> kwarg_value
 <kwarg_value> = string | number | class | list
-
-
-key_val = keyword <' = '> value
-
-<value> = string | string_keyword | number | bool | dict | class | !bool global | list
-<string> = <'\"'> chars? <'\"'>
-string_keyword = <'&\"'> chars? <'\"'>
-<chars> = #'(^\\\"|\\\\\"|[A-Za-z0-9_.:/ *,-@#!?${}()\\[\\]\n\\'\\\\\\|])*'
-list = <'['> (<ows> value <ows> <','?>)* <']'>
-number = '-'? digits '.'? digits? 'e-'? digits?
-<digits> = #'[0-9]+'
-bool = 'true' | 'false'
-dict = <'{'> (<ows> string <':'> <rws> value <ows> <','?>)* <'}'>
-class = #'[A-Za-z0-9]+' <'('> args? <')'>
+"
+                     shared-grammar value-grammar
+                     ;; specific overwrites
+                     "
+key_val = key <' = '> value
 <args> = value (<','> <ows> value <ows>)*
-global = #'[A-Za-z]+'
-"))
-
+")))
 
 (comment
   (->
