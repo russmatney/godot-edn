@@ -25,3 +25,6 @@ CLOSED: [2023-07-13 Thu 01:05]
 ** [ ] godot import addon to update .tscn/.tres/godot.project when .edn is updated
 ** [ ] autoloads should parse as an ordered list, not a map
 ** [ ] check-in on level of quote escaping in export_preset shell commands
+** [ ] support 'connection' in tscns
+** [ ] consider supporting comments in tscns
+as featured in the docs: https://docs.godotengine.org/en/stable/contributing/development/file_formats/tscn.html#arraymesh
