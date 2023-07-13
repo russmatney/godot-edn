@@ -99,14 +99,16 @@ global = #'[A-Za-z]+'
 (def tscn-grammar
   (insta/parser "
 <parsed> = (<ows> tscn_line <ows>)+
-<tscn_line> = gd_scene | ext_resource | sub_resource | node | key_val
+<tscn_line> = gd_scene | gd_resource | ext_resource | sub_resource | node | resource | key_val
 <ows> = #'\\s*'
 <rws> = #'\\s+'
 
 gd_scene = <'[gd_scene'> kwargs <']'>
+gd_resource = <'[gd_resource'> kwargs <']'>
 ext_resource = <'[ext_resource'> kwargs <']'>
 sub_resource = <'[sub_resource'> kwargs <']'>
 node = <'[node'> kwargs <']'>
+resource = <'[resource'> kwargs <']'>
 
 <keyword> = #'[A-Za-z0-9_/]+'
 kwargs = (<rws> kwarg)*
@@ -185,10 +187,10 @@ offset_left = -24.0
   (if (insta/failure? parsed)
     parsed
     (->> (insta/transform tscn-transform-def parsed)
-         (partition-by (comp #{:gd_scene :ext_resource :sub_resource :node} first))
+         (partition-by (comp #{:gd_scene :gd_resource :resource :ext_resource :sub_resource :node} first))
          (mapcat (fn [groups]
                    (if (and (-> groups first vector?)
-                            (-> groups ffirst #{:sub_resource :node})
+                            (-> groups ffirst #{:sub_resource :node :resource})
                             (-> groups count (> 1)))
                      ;; flatten nodes without config data
                      ;; so that the following key_vals can be applied to the last one
@@ -197,22 +199,27 @@ offset_left = -24.0
                      [groups])))
          ((fn [partitions]
             (let [
-                  gd_scene (->> partitions (filter (comp #{:gd_scene} ffirst)) first)
-                  ext_res  (->> partitions (filter (comp #{:ext_resource} ffirst)) first
-                                (map second))
-                  rst      (->> partitions (remove (comp #{:gd_scene :ext_resource} ffirst)))
-                  elms     (reduce
-                             (fn [ps p]
-                               (if (-> p ffirst #{:sub_resource :node})
-                                 (into [] (concat ps [(first p)]))
-                                 (into [] (concat (butlast ps)
-                                                  [(into [] (concat (last ps) [(apply merge p)]))]))))
-                             []
-                             rst)
-                  sub_res  (->> elms (filter (comp #{:sub_resource} first)) (map rest))
-                  nodes    (->> elms (filter (comp #{:node} first)) (map rest))]
+                  gd_scene    (->> partitions (filter (comp #{:gd_scene} ffirst)) first)
+                  gd_resource (->> partitions (filter (comp #{:gd_resource} ffirst)) first)
+                  ext_res     (->> partitions (filter (comp #{:ext_resource} ffirst)) first
+                                   (map second))
+                  rst         (->> partitions (remove (comp #{:gd_resource :gd_scene :ext_resource} ffirst)))
+                  elms        (reduce
+                                (fn [ps p]
+                                  (if (-> p ffirst #{:sub_resource :node :resource})
+                                    (into [] (concat ps [(first p)]))
+                                    (into [] (concat (butlast ps)
+                                                     [(into [] (concat (last ps) [(apply merge p)]))]))))
+                                []
+                                rst)
+                  sub_res     (->> elms (filter (comp #{:sub_resource} first)) (map rest))
+                  nodes       (->> elms (filter (comp #{:node} first)) (map rest))
+                  res         (->> elms (filter (comp #{:resource} first)) (map rest))
+                  ]
               (->>
                 {:gd_scene           (-> gd_scene first second)
+                 :gd_resource        (-> gd_resource first second)
+                 :resources          res
                  :external_resources ext_res
                  :sub_resources      sub_res
                  :nodes              nodes}
@@ -244,6 +251,7 @@ offset_left = -24.0
 
 (comment
   (parse-godot-file (str (fs/home) "/russmatney/dino/src/hatbot/zones/TheKingdom.tscn"))
+  (parse-godot-file (str (fs/home) "/russmatney/dino/src/hatbot/player/player_sprite_frames.tres"))
   (slurp
     (str (fs/home) "/russmatney/dino/src/hatbot/player/Player.tscn"))
 

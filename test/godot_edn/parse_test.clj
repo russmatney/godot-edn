@@ -660,3 +660,50 @@ layer_0/tile_data = PackedInt32Array(458759, 196609, 3)
         (let [result (sut/tscn->edn (sut/parse-tscn input))]
           (is result)
           (is (= expected result)))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; .tres
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(def tres-examples
+  {"[resource]
+animations = [{
+\"frames\": [{
+\"duration\": 1.0,
+\"texture\": SubResource(\"AtlasTexture_u6g6a\")
+}, {
+\"duration\": 1.0,
+\"texture\": SubResource(\"AtlasTexture_4c6jr\")
+}]
+}]
+" {:resources
+   (list (list {}
+               {:animations
+                [{:frames
+                  [{:duration 1.0 :texture '(SubResource "AtlasTexture_u6g6a")}
+                   {:duration 1.0
+                    :texture  '(SubResource "AtlasTexture_4c6jr")}]}]}))}
+
+   "[gd_resource type=\"SpriteFrames\" load_steps=35 format=3 uid=\"uid://b7n3u8ytapvb4\"]"
+   {:gd_resource
+    {:type       "SpriteFrames"
+     :load_steps 35
+     :format     3
+     :uid        "uid://b7n3u8ytapvb4"}}
+   })
+
+(deftest tres-grammar-test
+  (testing "*.tres contents can be parsed"
+    (doall
+      (for [input (keys tres-examples)]
+        (let [result (sut/parse-tscn input)]
+          (is result)
+          (is (not (insta/failure? result))))))))
+
+(deftest tres->edn-test
+  (testing "*.tres contents can be converted to edn"
+    (doall
+      (for [[input expected] tres-examples]
+        (let [result (sut/tscn->edn (sut/parse-tscn input))]
+          (is result)
+          (is (= expected result)))))))

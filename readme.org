@@ -13,8 +13,10 @@ Godot .tscn ref: https://docs.godotengine.org/en/stable/contributing/development
 CLOSED: [2023-07-12 Wed 15:45]
 ** [X] parse export_presets.cfg into edn
 CLOSED: [2023-07-12 Wed 19:51]
-** [ ] parse .tscn files into edn
-** [ ] parse .tres files into edn
+** [X] parse .tscn files into edn
+CLOSED: [2023-07-13 Thu 00:54]
+** [X] parse .tres files into edn
+CLOSED: [2023-07-13 Thu 01:05]
 ** [ ] write godot.project from edn
 ** [ ] write export_presets.cfg from edn
 ** [ ] write .tscn from edn
