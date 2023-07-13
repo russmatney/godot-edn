@@ -6,6 +6,26 @@
    [clojure.string :as string]
    ))
 
+(def shared-transform
+  {:key_val (fn [& args]
+              {(-> args first str
+                   ((fn [key]
+                      (if (<= (count (string/split key #"/")) 2)
+                        (keyword key)
+                        key))))
+               (-> args second)})
+   :number  #(edn/read-string (apply str %&))
+   :bool    (fn [val] (case val "true" true "false" false))
+   :dict    (fn [& kvs]
+              (->> kvs (partition 2 2)
+                   (map (fn [[key val]] [(keyword key) val]))
+                   (into {})))
+   :list    #(into [] %&)
+   :global  (fn [global]
+              (symbol global))
+   :class   (fn [cls & args]
+              (cons (symbol cls) args))})
+
 ;; project.godot files
 
 (def projects-godot-grammar
@@ -32,97 +52,18 @@ kwarg = string <':'> value
 global = #'[A-Za-z]+'
  "))
 
-(comment
-
-  (->>
-    "#!/usr/bin/env bash
-  export DISPLAY=:0
-  unzip -o -q \"{temp_dir}/{archive_name}\" -d \"{temp_dir}\"
-  \"{temp_dir}/{exe_name}\" {cmd_args}\""
-    (re-seq #"([A-Za-z0-9_.:/ *,-@#!?\n\"{}()$])*"))
-
-  (->>
-    "ssh_remote_deploy/cleanup_script=\"#!/usr/bin/env bash
-  kill $(pgrep -x -f \"{temp_dir}/{exe_name} {cmd_args}\")
-  rm -rf \"{temp_dir}\"\""
-    (re-seq #"[A-Za-z0-9_.:/ *,-@#!?\n\"{}()$]*"))
-
-  (->>
-    "ssh_remote_deploy/cleanup_script=\"#!/usr/bin/env bash
-  kill $(pgrep -x -f \\\"{temp_dir}/{exe_name} {cmd_args}\\\")
-  rm -rf \\\"{temp_dir}\\\"\""
-    (re-seq #"\"([A-Za-z0-9_.:/ *,-@#!?{}()$\n\\\"]*)\""))
-
-
-  {:ssh_remote_deploy/run_script ""}
-
-  (->>
-    "ssh_remote_deploy/cleanup_script=\"#!/usr/bin/env bash
-  kill $(pgrep -x -f \\\"{temp_dir}/{exe_name} {cmd_args}\\\")
-  rm -rf \\\"{temp_dir}\\\"\""
-    (#(insta/parses projects-godot-grammar %
-                    :partial :true
-                    :unhide :all
-                    )))
-
-
-  (->>
-    "
-[preset.0]
-
-name=\"dino-linux\"
-platform=\"Linux/X11\"
-runnable=true
-dedicated_server=false
-custom_features=\"dino\"
-export_filter=\"all_resources\"
-include_filter=\"\"
-exclude_filter=\"\"
-export_path=\"dist/dino-linux/dino-linux.x86_64\"
-encryption_include_filters=\"\"
-encryption_exclude_filters=\"\"
-encrypt_pck=false
-encrypt_directory=false
-"
-    (#(insta/parses projects-godot-grammar %
-                    ;; :partial :true
-                    ;; :unhide :all
-                    )))
-
-
-  )
-
-
-
-
-(def transform-def
-  {:section_header (comp keyword str)
-   :key_val        (fn [& args]
-                     {(-> args first str
-                          ((fn [key]
-                             (if (<= (count (string/split key #"/")) 2)
-                               (keyword key)
-                               key))))
-                      (-> args second)})
-   :number         #(edn/read-string (apply str %&))
-   :bool           (fn [val] (case val "true" true "false" false))
-   :dict           (fn [& kvs]
-                     (->> kvs (partition 2 2)
-                          (map (fn [[key val]] [(keyword key) val]))
-                          (into {})))
-   :list           #(into [] %&)
-   :kwarg          (fn [key & vals]
-                     [(keyword key) (some-> vals first)])
-   :global         (fn [global]
-                     (symbol global))
-   :class          (fn [cls & args]
-                     (cons (symbol cls) args))
-   :comment        (fn [& comments]
-                     {:comment (apply str comments)})})
+(def project-transform-def
+  (merge
+    shared-transform
+    {:section_header (comp keyword str)
+     :kwarg          (fn [key & vals]
+                       [(keyword key) (some-> vals first)])
+     :comment        (fn [& comments]
+                       {:comment (apply str comments)})}))
 
 (defn project->edn [parsed]
   (when-not (insta/failure? parsed)
-    (let [parts     (->> (insta/transform transform-def parsed)
+    (let [parts     (->> (insta/transform project-transform-def parsed)
                          (partition-by keyword?))
           parts     (if-not (some-> parts first first keyword?)
                       (cons (list :_top_level) parts) parts)
@@ -148,65 +89,129 @@ encrypt_directory=false
           (dissoc :_top_level)))))
 
 (defn parse-project [content]
-  (let [result (insta/parse projects-godot-grammar content
-                            #_#_:trace true)]
-    (when (insta/failure? result) (println
-                                    result
-                                    #_(insta/get-failure result)))
+  (let [result (insta/parse projects-godot-grammar content)]
+    (when (insta/failure? result) (println result))
     result))
-
-(comment
-  (def proj-content
-    (slurp
-      (str (fs/home) "/russmatney/dino/project.godot")))
-
-  (-> proj-content parse-project)
-  (-> proj-content parse-project project->edn)
-
-  (->
-    "ui_accept={
-\"deadzone\": 0.5,
-\"events\": [Object(InputEventKey,\"resource_local_to_scene\":false,\"resource_name\":\"\",\"device\":0)
-, Object(InputEventKey,\"resource_local_to_scene\":false,\"resource_name\":\"\",\"device\":0,\"window_id\":0)
-]}"
-    parse-project project->edn)
-
-  (-> "[preset.0]
-
-name=\"dino-linux\"
-codesign/custom_options=PackedStringArray()"
-      parse-project project->edn)
-
-  (-> "; Some comment
-; another comment" parse-project project->edn)
-
-  (-> "config_version=5
-
-[application]
-
-config/name=\"Dino\"
-config/features=PackedStringArray(\"4.1\")
-
-[rendering]
-
-textures/canvas_textures/default_texture_filter=0
-2d/snapping/use_gpu_pixel_snap=true
-environment/default_clear_color=Color(0, 0, 0, 1)"
-      parse-project project->edn))
 
 
 ;; .tscn files
 
-(def tscn-grammar (insta/parser "some = 'some'"))
+(def tscn-grammar
+  (insta/parser "
+<parsed> = (<ows> tscn_line <ows>)+
+<tscn_line> = gd_scene | ext_resource | sub_resource | node | key_val
+<ows> = #'\\s*'
+<rws> = #'\\s+'
+
+gd_scene = <'[gd_scene'> kwargs <']'>
+ext_resource = <'[ext_resource'> kwargs <']'>
+sub_resource = <'[sub_resource'> kwargs <']'>
+node = <'[node'> kwargs <']'>
+
+<keyword> = #'[a-z_]+'
+kwargs = (<rws> kwarg)*
+kwarg = keyword <'='> kwarg_value
+<kwarg_value> = string | number | class
+
+
+key_val = keyword <' = '> value
+
+<value> = string | number | bool | dict | class | !bool global | list
+<string> = <'\"'> chars? <'\"'>
+<chars> = #'(^\\\"|\\\\\"|[A-Za-z0-9_.:/ *,-@#!?${}()\n\\'\\\\\\|])*'
+list = <'['> (<ows> value <ows> <','?>)* <']'>
+number = '-'? digits '.'? digits?
+<digits> = #'[0-9]+'
+bool = 'true' | 'false'
+dict = <'{'> (<ows> string <':'> <rws> value <ows> <','?>)* <'}'>
+class = #'[A-Za-z0-9]+' <'('> args? <')'>
+<args> = value (<','> <ows> value <ows>)*
+global = #'[A-Za-z]+'
+"))
+
 
 (comment
-  (insta/parse projects-godot-grammar ""))
+  (def sample
+    "[gd_scene load_steps=43 format=3 uid=\"uid://cdtqoa3gaqsdh\"]
 
+[ext_resource type=\"Script\" path=\"res://src/hatbot/player/Player.gd\" id=\"1_20cuc\"]
+[ext_resource type=\"PackedScene\" uid=\"uid://dgan7tpytfkfo\" path=\"res://addons/beehive/sidescroller/machine/SSMachine.tscn\" id=\"11_oh4d4\"]
 
-;; .tres files
+[sub_resource type=\"OccluderPolygon2D\" id=\"OccluderPolygon2D_fow7p\"]
+cull_mode = 2
+polygon = PackedVector2Array(-3, -4, 3, -4, 3, 1, 2, 5, -2, 5, -3, 1)
 
-(def tres-grammar
-  (insta/parser "some = 'some'"))
+[sub_resource type=\"CapsuleShape2D\" id=\"CapsuleShape2D_ll7ph\"]
+radius = 3.8
+height = 12.0
+
+[node name=\"NearGroundCheck\" type=\"RayCast2D\" parent=\".\"]
+target_position = Vector2(0, 40)
+
+[node name=\"HeartParticles\" parent=\".\" instance=ExtResource(\"8_atx5s\")]
+
+[node name=\"SkullParticles\" parent=\".\" instance=ExtResource(\"9_u5coh\")]
+
+[node name=\"StateLabel\" type=\"RichTextLabel\" parent=\".\"]
+clip_contents = false
+offset_left = -24.0
+")
+
+  (->> sample
+       (#(insta/parses tscn-grammar
+                       %
+                       ;; :unhide :all
+                       )))
+
+  (->> sample parse-tscn tscn->edn)
+
+  )
+
+(def tscn-transform-def
+  (merge
+    shared-transform
+    {:kwarg  (fn [key val] [(keyword key) val])
+     :kwargs #(into {} %&)}))
+
+(defn tscn->edn [parsed]
+  (if (insta/failure? parsed)
+    parsed
+    (->> (insta/transform tscn-transform-def parsed)
+         (partition-by (comp #{:gd_scene :ext_resource :sub_resource :node} first))
+         (mapcat (fn [groups]
+                   (if (and (-> groups first vector?)
+                            (-> groups ffirst #{:sub_resource :node})
+                            (-> groups count (> 1)))
+                     ;; flatten nodes without config data
+                     ;; so that the following key_vals can be applied to the last one
+                     ;; we (map list) to get back to the same structure
+                     (->> groups (map list))
+                     [groups])))
+         ((fn [partitions]
+            (let [
+                  gd_scene (->> partitions (filter (comp #{:gd_scene} ffirst)) first)
+                  ext_res  (->> partitions (filter (comp #{:ext_resource} ffirst)) first
+                                (map second))
+                  rst      (->> partitions (remove (comp #{:gd_scene :ext_resource} ffirst)))
+                  elms     (reduce
+                             (fn [ps p]
+                               (if (-> p ffirst #{:sub_resource :node})
+                                 (into [] (concat ps [(first p)]))
+                                 (into [] (concat (butlast ps)
+                                                  [(into [] (concat (last ps) [(apply merge p)]))]))))
+                             []
+                             rst)
+                  sub_res  (->> elms (filter (comp #{:sub_resource} first)) (map rest))
+                  nodes    (->> elms (filter (comp #{:node} first)) (map rest))]
+              {:gd_scene           (-> gd_scene first second)
+               :external_resources ext_res
+               :sub_resources      sub_res
+               :nodes              nodes}))))))
+
+(defn parse-tscn [content]
+  (let [result (insta/parse tscn-grammar content)]
+    (when (insta/failure? result) (println result))
+    result))
 
 (comment
   (insta/parse projects-godot-grammar ""))
@@ -223,13 +228,13 @@ environment/default_clear_color=Color(0, 0, 0, 1)"
       (println "No file at path:" path)
       (cond
         (#{"godot" "cfg"} ext) (->> content (insta/parse projects-godot-grammar) project->edn)
-        (#{"tscn"} ext)        (insta/parse tscn-grammar content)
-        (#{"tres"} ext)        (insta/parse tres-grammar content)
+        (#{"tscn" "tres"} ext) (->> content (insta/parse tscn-grammar) tscn->edn)
         :else                  (println "Unexpected file extension:" ext)))))
 
 (comment
-  (parse-godot-file
-    (str (fs/home) "/russmatney/dino/project.godot"))
+  (parse-godot-file (str (fs/home) "/russmatney/dino/src/hatbot/player/Player.tscn"))
+  (slurp
+    (str (fs/home) "/russmatney/dino/src/hatbot/player/Player.tscn"))
 
-  (parse-godot-file
-    (str (fs/home) "/russmatney/dino/export_presets.cfg")))
+  (parse-godot-file (str (fs/home) "/russmatney/dino/project.godot"))
+  (parse-godot-file (str (fs/home) "/russmatney/dino/export_presets.cfg")))
